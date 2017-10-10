@@ -1,2 +1,4 @@
 # goautoit
-Using Autoit tools in golang
+golang invoke autoit function
+
+# example
