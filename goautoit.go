@@ -6,6 +6,7 @@ package goautoit
 import (
 	"log"
 	"syscall"
+	"unicode/utf16"
 	"unsafe"
 )
 
@@ -33,11 +34,55 @@ func WinMinimizeAllUndo() {
 //WinGetTitle -- get windows title
 func WinGetTitle() {
 	WGT := dll64.NewProc("AU3_WinGetTitle")
-	szTitle := ""
+	szTitle := "[active]"
 	szText := ""
-	szRetText := make([]byte, 256)
-	ret, _, lastErr := WGT.Call(uintptr(unsafe.Pointer(&szTitle)), uintptr(unsafe.Pointer(&szText)), uintptr(unsafe.Pointer(&szRetText)), 256)
+	// szRetText := ""
+	bufSize := 256
+	buff := make([]uint16, bufSize)
+	ret, _, lastErr := WGT.Call(strPtr(szTitle), strPtr(szText), uintptr(unsafe.Pointer(&buff)), intPtr(bufSize))
 	log.Println(ret)
 	log.Println(lastErr)
-	log.Println(string(szRetText))
+	log.Println(len(buff))
+	// pos := findTermChr(buff)
+	// log.Println(pos)
+	// log.Println(len(szRetText))
+}
+
+//WinGetText -- get text in window
+func WinGetText() {
+	WGT := dll64.NewProc("AU3_WinGetText")
+	bufSize := 256
+	buff := make([]uint16, bufSize)
+	ret, _, lastErr := WGT.Call()
+	pos := findTermChr(buff)
+	log.Println(ret)
+	log.Println(lastErr)
+	log.Println(string(utf16.Decode(buff[0:pos])))
+}
+
+// Run -- Run a windows program
+// flag 3(max) 6(min) 9(normal) 0(hide)
+func Run() {
+	run := dll64.NewProc("AU3_Run")
+	szProgram := "notepad.exe"
+	ret, _, lastErr := run.Call(strPtr(szProgram), strPtr("."), intPtr(0))
+	log.Println(ret)
+	log.Println(lastErr)
+}
+
+func findTermChr(buff []uint16) int {
+	for i, char := range buff {
+		if char == 0x0 {
+			return i
+		}
+	}
+	panic("not supposed to happen")
+}
+
+func intPtr(n int) uintptr {
+	return uintptr(n)
+}
+
+func strPtr(s string) uintptr {
+	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(s)))
 }
