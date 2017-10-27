@@ -39,25 +39,30 @@ func WinGetTitle() {
 	// szRetText := ""
 	bufSize := 256
 	buff := make([]uint16, bufSize)
-	ret, _, lastErr := WGT.Call(strPtr(szTitle), strPtr(szText), uintptr(unsafe.Pointer(&buff)), intPtr(bufSize))
+	// var buff *uint16
+	ret, _, lastErr := WGT.Call(strPtr(szTitle), strPtr(szText), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
 	log.Println(ret)
 	log.Println(lastErr)
 	log.Println(len(buff))
-	// pos := findTermChr(buff)
+	log.Println(buff[0])
+	// log.Println(GoWString(buff))
+	pos := findTermChr(buff)
+	log.Println(string(utf16.Decode(buff[0:pos])))
 	// log.Println(pos)
 	// log.Println(len(szRetText))
+	// log.Println(GoWString(buff))
 }
 
 //WinGetText -- get text in window
 func WinGetText() {
-	WGT := dll64.NewProc("AU3_WinGetText")
-	bufSize := 256
-	buff := make([]uint16, bufSize)
-	ret, _, lastErr := WGT.Call()
-	pos := findTermChr(buff)
-	log.Println(ret)
-	log.Println(lastErr)
-	log.Println(string(utf16.Decode(buff[0:pos])))
+	// WGT := dll64.NewProc("AU3_WinGetText")
+	// bufSize := 256
+	// buff := make([]uint16, bufSize)
+	// ret, _, lastErr := WGT.Call()
+	// pos := findTermChr(buff)
+	// log.Println(ret)
+	// log.Println(lastErr)
+	// log.Println(string(utf16.Decode(buff[0:pos])))
 }
 
 // Run -- Run a windows program
@@ -65,7 +70,7 @@ func WinGetText() {
 func Run() {
 	run := dll64.NewProc("AU3_Run")
 	szProgram := "notepad.exe"
-	ret, _, lastErr := run.Call(strPtr(szProgram), strPtr("."), intPtr(0))
+	ret, _, lastErr := run.Call(strPtr(szProgram), strPtr("."), intPtr(3))
 	log.Println(ret)
 	log.Println(lastErr)
 }
@@ -85,4 +90,21 @@ func intPtr(n int) uintptr {
 
 func strPtr(s string) uintptr {
 	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(s)))
+}
+
+// GoWString -- Convert a *uint16 C string to a Go String
+func GoWString(s *uint16) string {
+	if s == nil {
+		return ""
+	}
+
+	p := (*[1<<30 - 1]uint16)(unsafe.Pointer(s))
+
+	// find the string length
+	sz := 0
+	for p[sz] != 0 {
+		sz++
+	}
+
+	return string(utf16.Decode(p[:sz:sz]))
 }

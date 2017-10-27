@@ -5,7 +5,7 @@ import "testing"
 func TestWindows(t *testing.T) {
 	// WinMinimizeAll()
 	// WinMinimizeAllUndo()
-	// WinGetTitle()
+	WinGetTitle()
 	// WinGetText()
-	Run()
+	// Run()
 }
