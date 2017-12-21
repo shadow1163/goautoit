@@ -24,6 +24,8 @@ const (
 	SWShowMa          = 8
 	SWShowNoActive    = 4
 	SWShowNormal      = 1
+
+	INTDEFAULT = -2147483647
 )
 
 var (
@@ -34,9 +36,13 @@ var (
 	winGetText         *syscall.LazyProc
 	send               *syscall.LazyProc
 	run                *syscall.LazyProc
+	winWait            *syscall.LazyProc
+	controlClick       *syscall.LazyProc
+	mouseClick         *syscall.LazyProc
 )
 
 func init() {
+	log.SetFlags(log.LstdFlags | log.Llongfile)
 	// dll64, err = syscall.LoadDLL("D:\\Program Files (x86)\\AutoIt3\\AutoItX\\AutoItX3_x64.dll")
 	// defer dll64.Release()
 	dll64 = syscall.NewLazyDLL("D:\\Program Files (x86)\\AutoIt3\\AutoItX\\AutoItX3_x64.dll")
@@ -46,6 +52,9 @@ func init() {
 	winGetText = dll64.NewProc("AU3_WinGetText")
 	send = dll64.NewProc("AU3_Send")
 	run = dll64.NewProc("AU3_Run")
+	winWait = dll64.NewProc("AU3_WinWait")
+	controlClick = dll64.NewProc("AU3_ControlClick")
+	mouseClick = dll64.NewProc("AU3_MouseClick")
 }
 
 // WinMinimizeAll -- all windows should be minimize
@@ -84,7 +93,7 @@ func WinGetText(szTitle, szText string, bufSize int) string {
 
 // Run -- Run a windows program
 // flag 3(max) 6(min) 9(normal) 0(hide)
-func Run(szProgram string, args ...interface{}) {
+func Run(szProgram string, args ...interface{}) int {
 	var szDir string
 	var flag int
 	var ok bool
@@ -106,7 +115,12 @@ func Run(szProgram string, args ...interface{}) {
 	} else {
 		panic("Too more parameter")
 	}
-	run.Call(strPtr(szProgram), strPtr(szDir), intPtr(flag))
+	pid, _, lastErr := run.Call(strPtr(szProgram), strPtr(szDir), intPtr(flag))
+	// log.Println(pid)
+	if int(pid) == 0 {
+		log.Println(lastErr)
+	}
+	return int(pid)
 }
 
 //Send -- Send simulates input on the keyboard
@@ -124,6 +138,144 @@ func Send(key string, args ...interface{}) {
 		panic("Too more parameter")
 	}
 	send.Call(strPtr(key), intPtr(nMode))
+}
+
+//WinWait -- wait window to active
+//
+func WinWait(szTitle string, args ...interface{}) int {
+	var szText string
+	var nTimeout int
+	var ok bool
+	if len(args) == 0 {
+		szText = ""
+		nTimeout = 0
+	} else if len(args) == 1 {
+		if szText, ok = args[0].(string); !ok {
+			panic("szText must be a string")
+		}
+		nTimeout = 0
+	} else if len(args) == 2 {
+		if szText, ok = args[0].(string); !ok {
+			panic("szText must be a string")
+		}
+		if nTimeout, ok = args[1].(int); !ok {
+			panic("nTimeout must be a int")
+		}
+	} else {
+		panic("Too more parameter")
+	}
+
+	handle, _, lastErr := winWait.Call(strPtr(szTitle), strPtr(szText), intPtr(nTimeout))
+	if int(handle) == 0 {
+		log.Print("timeout or failure!!!")
+		log.Println(lastErr)
+	}
+	return int(handle)
+}
+
+//MouseClick --
+func MouseClick(button string, args ...interface{}) int {
+	var x, y, nClicks, nSpeed int
+	var ok bool
+
+	if len(args) == 0 {
+		x = INTDEFAULT
+		y = INTDEFAULT
+		nClicks = 1
+		nSpeed = 10
+	} else if len(args) == 2 {
+		if x, ok = args[0].(int); !ok {
+			panic("x must be a int")
+		}
+		if y, ok = args[1].(int); !ok {
+			panic("y must be a int")
+		}
+		nClicks = 1
+		nSpeed = 10
+	} else if len(args) == 3 {
+		if x, ok = args[0].(int); !ok {
+			panic("x must be a int")
+		}
+		if y, ok = args[1].(int); !ok {
+			panic("y must be a int")
+		}
+		if nClicks, ok = args[2].(int); !ok {
+			panic("nClicks must be a int")
+		}
+		nSpeed = 10
+	} else if len(args) == 4 {
+		if x, ok = args[0].(int); !ok {
+			panic("x must be a int")
+		}
+		if y, ok = args[1].(int); !ok {
+			panic("y must be a int")
+		}
+		if nClicks, ok = args[2].(int); !ok {
+			panic("nClicks must be a int")
+		}
+		if nSpeed, ok = args[3].(int); !ok {
+			panic("nSpeed must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	ret, _, lastErr := mouseClick.Call(strPtr(button), intPtr(x), intPtr(y), intPtr(nClicks), intPtr(nSpeed))
+	if int(ret) != 1 {
+		log.Print("failure!!!")
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlClick --
+func ControlClick(title, text, control string, args ...interface{}) int {
+	var button string
+	var x, y, nClicks int
+	var ok bool
+
+	if len(args) == 0 {
+		button = "left"
+		nClicks = 1
+		x = INTDEFAULT
+		y = INTDEFAULT
+	} else if len(args) == 1 {
+		if button, ok = args[0].(string); !ok {
+			panic("button must be a string")
+		}
+		nClicks = 1
+		x = INTDEFAULT
+		y = INTDEFAULT
+	} else if len(args) == 2 {
+		if button, ok = args[0].(string); !ok {
+			panic("button must be a string")
+		}
+		if nClicks, ok = args[1].(int); !ok {
+			panic("nClicks must be a int")
+		}
+		x = INTDEFAULT
+		y = INTDEFAULT
+	} else if len(args) == 4 {
+		if button, ok = args[0].(string); !ok {
+			panic("button must be a string")
+		}
+		if nClicks, ok = args[1].(int); !ok {
+			panic("nClicks must be a int")
+		}
+		if x, ok = args[2].(int); !ok {
+			panic("x must be a int")
+		}
+		if y, ok = args[3].(int); !ok {
+			panic("y must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	ret, _, lastErr := controlClick.Call(strPtr(title), strPtr(text), strPtr(control), strPtr(button), intPtr(nClicks), intPtr(x), intPtr(y))
+	if int(ret) == 0 {
+		log.Print("failure!!!")
+		log.Println(lastErr)
+	}
+	return int(ret)
 }
 
 func findTermChr(buff []uint16) int {
