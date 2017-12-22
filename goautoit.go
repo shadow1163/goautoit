@@ -28,6 +28,8 @@ const (
 	INTDEFAULT = -2147483647
 )
 
+type HWND uintptr
+
 var (
 	dll64              *syscall.LazyDLL
 	winMinimizeAll     *syscall.LazyProc
@@ -39,6 +41,10 @@ var (
 	winWait            *syscall.LazyProc
 	controlClick       *syscall.LazyProc
 	mouseClick         *syscall.LazyProc
+	clipGet            *syscall.LazyProc
+	clipPut            *syscall.LazyProc
+	winGetHandle       *syscall.LazyProc
+	winCloseByHandle   *syscall.LazyProc
 )
 
 func init() {
@@ -55,6 +61,10 @@ func init() {
 	winWait = dll64.NewProc("AU3_WinWait")
 	controlClick = dll64.NewProc("AU3_ControlClick")
 	mouseClick = dll64.NewProc("AU3_MouseClick")
+	clipGet = dll64.NewProc("AU3_ClipGet")
+	clipPut = dll64.NewProc("AU3_ClipPut")
+	winGetHandle = dll64.NewProc("AU3_WinGetHandle")
+	winCloseByHandle = dll64.NewProc("AU3_WinCloseByHandle")
 }
 
 // WinMinimizeAll -- all windows should be minimize
@@ -76,19 +86,14 @@ func WinGetTitle(szTitle, szText string, bufSize int) string {
 	ret, _, lastErr := winGetTitle.Call(strPtr(szTitle), strPtr(szText), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
 	log.Println(ret)
 	log.Println(lastErr)
-	pos := findTermChr(buff)
-	log.Println(string(utf16.Decode(buff[0:pos])))
-	// log.Println(pos)
-	return (string(utf16.Decode(buff[0:pos])))
+	return (goWString(buff))
 }
 
 //WinGetText -- get text in window
 func WinGetText(szTitle, szText string, bufSize int) string {
 	buff := make([]uint16, int(bufSize))
 	winGetText.Call(strPtr(szTitle), strPtr(szText), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
-	pos := findTermChr(buff)
-	log.Println(string(utf16.Decode(buff[0:pos])))
-	return (string(utf16.Decode(buff[0:pos])))
+	return (goWString(buff))
 }
 
 // Run -- Run a windows program
@@ -278,6 +283,64 @@ func ControlClick(title, text, control string, args ...interface{}) int {
 	return int(ret)
 }
 
+//ClipGet -- get a string from clip
+func ClipGet(args ...interface{}) string {
+	var nBufSize int
+	var ok bool
+	if len(args) == 0 {
+		nBufSize = 256
+	} else if len(args) == 1 {
+		if nBufSize, ok = args[0].(int); !ok {
+			panic("nBufSize must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	clip := make([]uint16, int(nBufSize))
+	clipGet.Call(uintptr(unsafe.Pointer(&clip[0])), intPtr(nBufSize))
+	return (goWString(clip))
+}
+
+// ClipPut -- put a string to clip
+func ClipPut(szClip string) int {
+	ret, _, lastErr := clipPut.Call(strPtr(szClip))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//WinGetHandle -- get window handle
+func WinGetHandle(title string, args ...interface{}) HWND {
+	var text string
+	var ok bool
+	if len(args) == 0 {
+		text = ""
+	} else if len(args) == 1 {
+		if text, ok = args[0].(string); !ok {
+			panic("text must be a string")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	ret, _, lastErr := winGetHandle.Call(strPtr(title), strPtr(text))
+	if int(ret) == 0 {
+		log.Print("failure!!!")
+		log.Println(lastErr)
+	}
+	return HWND(ret)
+}
+
+// WinCloseByHandle --
+func WinCloseByHandle(hwnd HWND) int {
+	ret, _, lastErr := winCloseByHandle.Call(uintptr(hwnd))
+	if int(ret) == 0 {
+		log.Print("failure!!!")
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
 func findTermChr(buff []uint16) int {
 	for i, char := range buff {
 		if char == 0x0 {
@@ -295,19 +358,9 @@ func strPtr(s string) uintptr {
 	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(s)))
 }
 
-// GoWString -- Convert a *uint16 C string to a Go String
-func GoWString(s *uint16) string {
-	if s == nil {
-		return ""
-	}
-
-	p := (*[1<<30 - 1]uint16)(unsafe.Pointer(s))
-
-	// find the string length
-	sz := 0
-	for p[sz] != 0 {
-		sz++
-	}
-
-	return string(utf16.Decode(p[:sz:sz]))
+// GoWString -- Convert a uint16 arrry C string to a Go String
+func goWString(s []uint16) string {
+	pos := findTermChr(s)
+	// log.Println(string(utf16.Decode(s[0:pos])))
+	return (string(utf16.Decode(s[0:pos])))
 }
