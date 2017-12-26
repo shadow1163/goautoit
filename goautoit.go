@@ -28,6 +28,7 @@ const (
 	INTDEFAULT = -2147483647
 )
 
+// HWND -- window handle
 type HWND uintptr
 
 var (
@@ -45,6 +46,8 @@ var (
 	clipPut            *syscall.LazyProc
 	winGetHandle       *syscall.LazyProc
 	winCloseByHandle   *syscall.LazyProc
+	controlSend        *syscall.LazyProc
+	controlSetText     *syscall.LazyProc
 )
 
 func init() {
@@ -65,6 +68,8 @@ func init() {
 	clipPut = dll64.NewProc("AU3_ClipPut")
 	winGetHandle = dll64.NewProc("AU3_WinGetHandle")
 	winCloseByHandle = dll64.NewProc("AU3_WinCloseByHandle")
+	controlSend = dll64.NewProc("AU3_ControlSend")
+	controlSetText = dll64.NewProc("AU3_ControlSetText")
 }
 
 // WinMinimizeAll -- all windows should be minimize
@@ -336,6 +341,35 @@ func WinCloseByHandle(hwnd HWND) int {
 	ret, _, lastErr := winCloseByHandle.Call(uintptr(hwnd))
 	if int(ret) == 0 {
 		log.Print("failure!!!")
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlSend --
+func ControlSend(title, text, control, sendText string, args ...interface{}) int {
+	var nMode int
+	var ok bool
+	if len(args) == 0 {
+		nMode = 0
+	} else if len(args) == 1 {
+		if nMode, ok = args[0].(int); !ok {
+			panic("nMode must be a int")
+		}
+	} else {
+		panic("Too more parameter")
+	}
+	ret, _, lastErr := controlSend.Call(strPtr(title), strPtr(text), strPtr(control), strPtr(sendText), intPtr(nMode))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlSetText --
+func ControlSetText(title, text, control, newText string) int {
+	ret, _, lastErr := controlSetText.Call(strPtr(title), strPtr(text), strPtr(control), strPtr(newText))
+	if int(ret) == 0 {
 		log.Println(lastErr)
 	}
 	return int(ret)
