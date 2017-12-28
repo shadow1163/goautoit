@@ -54,7 +54,7 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 	// dll64, err = syscall.LoadDLL("D:\\Program Files (x86)\\AutoIt3\\AutoItX\\AutoItX3_x64.dll")
 	// defer dll64.Release()
-	dll64 = syscall.NewLazyDLL("D:\\Program Files (x86)\\AutoIt3\\AutoItX\\AutoItX3_x64.dll")
+	dll64 = syscall.NewLazyDLL("lib\\AutoItX3_x64.dll")
 	winMinimizeAll = dll64.NewProc("AU3_WinMinimizeAll")
 	winMinimizeAllundo = dll64.NewProc("AU3_WinMinimizeAllUndo")
 	winGetTitle = dll64.NewProc("AU3_WinGetTitle")
