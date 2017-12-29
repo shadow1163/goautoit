@@ -5,6 +5,8 @@ package goautoit
 
 import (
 	"log"
+	"path"
+	"runtime"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
@@ -54,7 +56,10 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 	// dll64, err = syscall.LoadDLL("D:\\Program Files (x86)\\AutoIt3\\AutoItX\\AutoItX3_x64.dll")
 	// defer dll64.Release()
-	dll64 = syscall.NewLazyDLL("lib\\AutoItX3_x64.dll")
+	_, filename, _, _ := runtime.Caller(1)
+	filename = path.Join(path.Dir(filename), "lib\\AutoItX3_x64.dll")
+	dll64 = syscall.NewLazyDLL(filename)
+	// dll64 = syscall.NewLazyDLL(os.Getenv("GOPATH") + "\\src\\github.com\\shadow1163\\goautoit\\lib\\AutoItX3_x64.dll")
 	winMinimizeAll = dll64.NewProc("AU3_WinMinimizeAll")
 	winMinimizeAllundo = dll64.NewProc("AU3_WinMinimizeAllUndo")
 	winGetTitle = dll64.NewProc("AU3_WinGetTitle")
