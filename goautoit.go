@@ -39,6 +39,11 @@ type RECT struct {
 	Left, Top, Right, Bottom int32
 }
 
+//POINT --
+type POINT struct {
+	X, Y int32
+}
+
 var (
 	dll64                   *syscall.LazyDLL
 	winMinimizeAll          *syscall.LazyProc
@@ -85,6 +90,11 @@ var (
 	controlTreeViewByHandle *syscall.LazyProc
 	mouseClickDrag          *syscall.LazyProc
 	mouseDown               *syscall.LazyProc
+	mouseGetCursor          *syscall.LazyProc
+	mouseGetPos             *syscall.LazyProc
+	mouseMove               *syscall.LazyProc
+	mouseUp                 *syscall.LazyProc
+	mouseWheel              *syscall.LazyProc
 )
 
 func init() {
@@ -133,6 +143,11 @@ func init() {
 	controlTreeViewByHandle = dll64.NewProc("AU3_ControlTreeViewByHandle")
 	mouseClickDrag = dll64.NewProc("AU3_MouseClickDrag")
 	mouseDown = dll64.NewProc("AU3_MouseDown")
+	mouseGetCursor = dll64.NewProc("AU3_MouseGetCursor")
+	mouseGetPos = dll64.NewProc("AU3_MouseGetPos")
+	mouseMove = dll64.NewProc("AU3_MouseMove")
+	mouseUp = dll64.NewProc("AU3_MouseUp")
+	mouseWheel = dll64.NewProc("AU3_MouseWheel")
 }
 
 // WinMinimizeAll -- all windows should be minimize
