@@ -27,29 +27,64 @@ const (
 	SWShowNoActive    = 4
 	SWShowNormal      = 1
 
-	INTDEFAULT = -2147483647
+	INTDEFAULT         = -2147483647
+	DefaultMouseButton = "left"
 )
 
 // HWND -- window handle
 type HWND uintptr
 
+//RECT -- http://msdn.microsoft.com/en-us/library/windows/desktop/dd162897.aspx
+type RECT struct {
+	Left, Top, Right, Bottom int32
+}
+
 var (
-	dll64              *syscall.LazyDLL
-	winMinimizeAll     *syscall.LazyProc
-	winMinimizeAllundo *syscall.LazyProc
-	winGetTitle        *syscall.LazyProc
-	winGetText         *syscall.LazyProc
-	send               *syscall.LazyProc
-	run                *syscall.LazyProc
-	winWait            *syscall.LazyProc
-	controlClick       *syscall.LazyProc
-	mouseClick         *syscall.LazyProc
-	clipGet            *syscall.LazyProc
-	clipPut            *syscall.LazyProc
-	winGetHandle       *syscall.LazyProc
-	winCloseByHandle   *syscall.LazyProc
-	controlSend        *syscall.LazyProc
-	controlSetText     *syscall.LazyProc
+	dll64                   *syscall.LazyDLL
+	winMinimizeAll          *syscall.LazyProc
+	winMinimizeAllundo      *syscall.LazyProc
+	winGetTitle             *syscall.LazyProc
+	winGetText              *syscall.LazyProc
+	send                    *syscall.LazyProc
+	run                     *syscall.LazyProc
+	winWait                 *syscall.LazyProc
+	controlClick            *syscall.LazyProc
+	controlClickByHandle    *syscall.LazyProc
+	mouseClick              *syscall.LazyProc
+	clipGet                 *syscall.LazyProc
+	clipPut                 *syscall.LazyProc
+	winGetHandle            *syscall.LazyProc
+	winCloseByHandle        *syscall.LazyProc
+	controlSend             *syscall.LazyProc
+	controlSendByHandle     *syscall.LazyProc
+	controlSetText          *syscall.LazyProc
+	controlSetTextByHandle  *syscall.LazyProc
+	controlCommand          *syscall.LazyProc
+	controlCommandByHandle  *syscall.LazyProc
+	controlListView         *syscall.LazyProc
+	controlListViewByHandle *syscall.LazyProc
+	controlDisable          *syscall.LazyProc
+	controlDisableByHandle  *syscall.LazyProc
+	controlEnable           *syscall.LazyProc
+	controlEnableByHandle   *syscall.LazyProc
+	controlFocus            *syscall.LazyProc
+	controlFocusByHandle    *syscall.LazyProc
+	controlGetHandle        *syscall.LazyProc
+	controlGetHandleAsText  *syscall.LazyProc
+	controlGetPos           *syscall.LazyProc
+	controlGetPosByHandle   *syscall.LazyProc
+	controlGetText          *syscall.LazyProc
+	controlGetTextByHandle  *syscall.LazyProc
+	controlHide             *syscall.LazyProc
+	controlHideByHandle     *syscall.LazyProc
+	controlMove             *syscall.LazyProc
+	controlMoveByHandle     *syscall.LazyProc
+	controlShow             *syscall.LazyProc
+	controlShowByHandle     *syscall.LazyProc
+	controlTreeView         *syscall.LazyProc
+	controlTreeViewByHandle *syscall.LazyProc
+	mouseClickDrag          *syscall.LazyProc
+	mouseDown               *syscall.LazyProc
 )
 
 func init() {
@@ -68,13 +103,36 @@ func init() {
 	run = dll64.NewProc("AU3_Run")
 	winWait = dll64.NewProc("AU3_WinWait")
 	controlClick = dll64.NewProc("AU3_ControlClick")
+	controlClickByHandle = dll64.NewProc("AU3_ControlClickByHandle")
 	mouseClick = dll64.NewProc("AU3_MouseClick")
 	clipGet = dll64.NewProc("AU3_ClipGet")
 	clipPut = dll64.NewProc("AU3_ClipPut")
 	winGetHandle = dll64.NewProc("AU3_WinGetHandle")
 	winCloseByHandle = dll64.NewProc("AU3_WinCloseByHandle")
 	controlSend = dll64.NewProc("AU3_ControlSend")
+	controlSendByHandle = dll64.NewProc("AU3_ControlSendByHandle")
 	controlSetText = dll64.NewProc("AU3_ControlSetText")
+	controlSetTextByHandle = dll64.NewProc("AU3_ControlSetTextByHandle")
+	controlCommand = dll64.NewProc("AU3_ControlCommand")
+	controlCommandByHandle = dll64.NewProc("AU3_ControlCommandByHandle")
+	controlListView = dll64.NewProc("AU3_ControlListView")
+	controlListViewByHandle = dll64.NewProc("AU3_ControlListViewByHandle")
+	controlGetHandle = dll64.NewProc("AU3_ControlGetHandle")
+	controlGetHandleAsText = dll64.NewProc("AU3_ControlGetHandleAsText")
+	controlGetPos = dll64.NewProc("AU3_ControlGetPos")
+	controlGetPosByHandle = dll64.NewProc("AU3_ControlGetPosByHandle")
+	controlGetText = dll64.NewProc("AU3_ControlGetText")
+	controlGetTextByHandle = dll64.NewProc("AU3_ControlGetTextByHandle")
+	controlHide = dll64.NewProc("AU3_ControlHide")
+	controlHideByHandle = dll64.NewProc("AU3_ControlHideByHandle")
+	controlMove = dll64.NewProc("AU3_ControlMove")
+	controlMoveByHandle = dll64.NewProc("AU3_ControlMoveByHandle")
+	controlShow = dll64.NewProc("AU3_ControlShow")
+	controlShowByHandle = dll64.NewProc("AU3_ControlShowByHandle")
+	controlTreeView = dll64.NewProc("AU3_ControlTreeView")
+	controlTreeViewByHandle = dll64.NewProc("AU3_ControlTreeViewByHandle")
+	mouseClickDrag = dll64.NewProc("AU3_MouseClickDrag")
+	mouseDown = dll64.NewProc("AU3_MouseDown")
 }
 
 // WinMinimizeAll -- all windows should be minimize
@@ -188,7 +246,7 @@ func WinWait(szTitle string, args ...interface{}) int {
 	return int(handle)
 }
 
-//MouseClick --
+//MouseClick -- Perform a mouse click operation.
 func MouseClick(button string, args ...interface{}) int {
 	var x, y, nClicks, nSpeed int
 	var ok bool
@@ -242,14 +300,14 @@ func MouseClick(button string, args ...interface{}) int {
 	return int(ret)
 }
 
-//ControlClick --
+//ControlClick -- Sends a mouse click command to a given control.
 func ControlClick(title, text, control string, args ...interface{}) int {
 	var button string
 	var x, y, nClicks int
 	var ok bool
 
 	if len(args) == 0 {
-		button = "left"
+		button = DefaultMouseButton
 		nClicks = 1
 		x = INTDEFAULT
 		y = INTDEFAULT
@@ -286,6 +344,57 @@ func ControlClick(title, text, control string, args ...interface{}) int {
 		panic("Error parameters")
 	}
 	ret, _, lastErr := controlClick.Call(strPtr(title), strPtr(text), strPtr(control), strPtr(button), intPtr(nClicks), intPtr(x), intPtr(y))
+	if int(ret) == 0 {
+		log.Print("failure!!!")
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlClickByHandle -- Sends a mouse click command to a given control.
+func ControlClickByHandle(handle, control HWND, args ...interface{}) int {
+	var button string
+	var x, y, nClicks int
+	var ok bool
+
+	if len(args) == 0 {
+		button = DefaultMouseButton
+		nClicks = 1
+		x = INTDEFAULT
+		y = INTDEFAULT
+	} else if len(args) == 1 {
+		if button, ok = args[0].(string); !ok {
+			panic("button must be a string")
+		}
+		nClicks = 1
+		x = INTDEFAULT
+		y = INTDEFAULT
+	} else if len(args) == 2 {
+		if button, ok = args[0].(string); !ok {
+			panic("button must be a string")
+		}
+		if nClicks, ok = args[1].(int); !ok {
+			panic("nClicks must be a int")
+		}
+		x = INTDEFAULT
+		y = INTDEFAULT
+	} else if len(args) == 4 {
+		if button, ok = args[0].(string); !ok {
+			panic("button must be a string")
+		}
+		if nClicks, ok = args[1].(int); !ok {
+			panic("nClicks must be a int")
+		}
+		if x, ok = args[2].(int); !ok {
+			panic("x must be a int")
+		}
+		if y, ok = args[3].(int); !ok {
+			panic("y must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	ret, _, lastErr := controlClickByHandle.Call(uintptr(handle), uintptr(control), strPtr(button), intPtr(nClicks), intPtr(x), intPtr(y))
 	if int(ret) == 0 {
 		log.Print("failure!!!")
 		log.Println(lastErr)
@@ -351,7 +460,7 @@ func WinCloseByHandle(hwnd HWND) int {
 	return int(ret)
 }
 
-//ControlSend --
+//ControlSend -- Sends a string of characters to a control.
 func ControlSend(title, text, control, sendText string, args ...interface{}) int {
 	var nMode int
 	var ok bool
@@ -371,13 +480,521 @@ func ControlSend(title, text, control, sendText string, args ...interface{}) int
 	return int(ret)
 }
 
-//ControlSetText --
+//ControlSendByHandle -- Sends a string of characters to a control.
+func ControlSendByHandle(handle, control HWND, sendText string, args ...interface{}) int {
+	var nMode int
+	var ok bool
+	if len(args) == 0 {
+		nMode = 0
+	} else if len(args) == 1 {
+		if nMode, ok = args[0].(int); !ok {
+			panic("nMode must be a int")
+		}
+	} else {
+		panic("Too more parameter")
+	}
+	ret, _, lastErr := controlSendByHandle.Call(uintptr(handle), uintptr(control), strPtr(sendText), intPtr(nMode))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlSetText -- Sets text of a control.
 func ControlSetText(title, text, control, newText string) int {
 	ret, _, lastErr := controlSetText.Call(strPtr(title), strPtr(text), strPtr(control), strPtr(newText))
 	if int(ret) == 0 {
 		log.Println(lastErr)
 	}
 	return int(ret)
+}
+
+//ControlSetTextByHandle -- Sets text of a control.
+func ControlSetTextByHandle(handle, control HWND, newText string) int {
+	ret, _, lastErr := controlSetTextByHandle.Call(uintptr(handle), uintptr(control), strPtr(newText))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlCommand -- Sends a command to a control.
+func ControlCommand(title, text, control, command string, args ...interface{}) string {
+	var Extra string
+	var bufSize int
+	var ok bool
+
+	if len(args) == 0 {
+		Extra = ""
+		bufSize = 256
+	} else if len(args) == 1 {
+		if Extra, ok = args[0].(string); !ok {
+			panic("Extra must be a string")
+		}
+		bufSize = 256
+	} else if len(args) == 2 {
+		if Extra, ok = args[0].(string); !ok {
+			panic("Extra must be a string")
+		}
+		if bufSize, ok = args[1].(int); !ok {
+			panic("bufferSize must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	buff := make([]uint16, int(bufSize))
+	ret, _, lastErr := controlCommand.Call(strPtr(title), strPtr(text), strPtr(control), strPtr(command), strPtr(Extra), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return (goWString(buff))
+}
+
+//ControlCommandByHandle -- Sends a command to a control.
+func ControlCommandByHandle(handle, control HWND, command string, args ...interface{}) string {
+	var Extra string
+	var bufSize int
+	var ok bool
+
+	if len(args) == 0 {
+		Extra = ""
+		bufSize = 256
+	} else if len(args) == 1 {
+		if Extra, ok = args[0].(string); !ok {
+			panic("Extra must be a string")
+		}
+		bufSize = 256
+	} else if len(args) == 2 {
+		if Extra, ok = args[0].(string); !ok {
+			panic("Extra must be a string")
+		}
+		if bufSize, ok = args[1].(int); !ok {
+			panic("bufferSize must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	buff := make([]uint16, int(bufSize))
+	ret, _, lastErr := controlCommandByHandle.Call(uintptr(handle), uintptr(control), strPtr(command), strPtr(Extra), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return (goWString(buff))
+}
+
+//ControlListView --Sends a command to a ListView32 control.
+func ControlListView(title, text, control, command string, args ...interface{}) string {
+	var Extra1, Extra2 string
+	var bufSize int
+	var ok bool
+
+	if len(args) == 0 {
+		Extra1 = ""
+		Extra2 = ""
+		bufSize = 256
+	} else if len(args) == 1 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		Extra2 = ""
+		bufSize = 256
+	} else if len(args) == 2 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		if Extra2, ok = args[1].(string); !ok {
+			panic("Extra2 must be a string")
+		}
+		bufSize = 256
+	} else if len(args) == 3 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		if Extra2, ok = args[1].(string); !ok {
+			panic("Extra2 must be a string")
+		}
+		if bufSize, ok = args[2].(int); !ok {
+			panic("bufSize must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	buff := make([]uint16, int(bufSize))
+	ret, _, lastErr := controlListView.Call(strPtr(title), strPtr(text), strPtr(control), strPtr(command), strPtr(Extra1), strPtr(Extra2), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return (goWString(buff))
+}
+
+//ControlListViewByHandle --Sends a command to a ListView32 control.
+func ControlListViewByHandle(handle, control HWND, command string, args ...interface{}) string {
+	var Extra1, Extra2 string
+	var bufSize int
+	var ok bool
+
+	if len(args) == 0 {
+		Extra1 = ""
+		Extra2 = ""
+		bufSize = 256
+	} else if len(args) == 1 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		Extra2 = ""
+		bufSize = 256
+	} else if len(args) == 2 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		if Extra2, ok = args[1].(string); !ok {
+			panic("Extra2 must be a string")
+		}
+		bufSize = 256
+	} else if len(args) == 3 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		if Extra2, ok = args[1].(string); !ok {
+			panic("Extra2 must be a string")
+		}
+		if bufSize, ok = args[2].(int); !ok {
+			panic("bufSize must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	buff := make([]uint16, int(bufSize))
+	ret, _, lastErr := controlListViewByHandle.Call(uintptr(handle), uintptr(control), strPtr(command), strPtr(Extra1), strPtr(Extra2), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return (goWString(buff))
+}
+
+//ControlDisable -- Disables or "grays-out" a control.
+func ControlDisable(title, text, control string) int {
+	ret, _, lastErr := controlDisable.Call(strPtr(title), strPtr(text), strPtr(control))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlDisableByHandle -- Disables or "grays-out" a control.
+func ControlDisableByHandle(handle, control HWND) int {
+	ret, _, lastErr := controlDisableByHandle.Call(uintptr(handle), uintptr(control))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlEnable -- Enables a "grayed-out" control.
+func ControlEnable(title, text, control string) int {
+	ret, _, lastErr := controlEnable.Call(strPtr(title), strPtr(text), strPtr(control))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlEnableByHandle -- Enables a "grayed-out" control.
+func ControlEnableByHandle(handle, control HWND) int {
+	ret, _, lastErr := controlEnableByHandle.Call(uintptr(handle), uintptr(control))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlFocus -- Sets input focus to a given control on a window.
+func ControlFocus(title, text, control string) int {
+	ret, _, lastErr := controlFocus.Call(strPtr(title), strPtr(text), strPtr(control))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlFocusByHandle -- Sets input focus to a given control on a window.
+func ControlFocusByHandle(handle, control HWND) int {
+	ret, _, lastErr := controlFocusByHandle.Call(uintptr(handle), uintptr(control))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlGetHandle -- Retrieves the internal handle of a control.
+func ControlGetHandle(handle HWND, control string) HWND {
+	ret, _, lastErr := controlGetHandle.Call(uintptr(handle), strPtr(control))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return HWND(ret)
+}
+
+//ControlGetHandleAsText -- Retrieves the internal handle of a control.
+func ControlGetHandleAsText(title, text, control string, args ...interface{}) string {
+	var bufSize int
+	var ok bool
+
+	if len(args) == 0 {
+		bufSize = 256
+	} else if len(args) == 1 {
+		if bufSize, ok = args[0].(int); !ok {
+			panic("bufSize must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	buff := make([]uint16, int(bufSize))
+	ret, _, lastErr := controlGetHandleAsText.Call(strPtr(title), strPtr(text), strPtr(control), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return (goWString(buff))
+}
+
+//ControlGetPos -- Retrieves the position and size of a control relative to its window.
+func ControlGetPos(title, text, control string) RECT {
+	lprect := RECT{}
+	ret, _, lastErr := controlGetPos.Call(strPtr(title), strPtr(text), strPtr(control), uintptr(unsafe.Pointer(&lprect)))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return lprect
+}
+
+//ControlGetPosByHandle -- Retrieves the position and size of a control relative to its window.
+func ControlGetPosByHandle(title, text, control string) RECT {
+	lprect := RECT{}
+	ret, _, lastErr := controlGetPosByHandle.Call(strPtr(title), strPtr(text), strPtr(control), uintptr(unsafe.Pointer(&lprect)))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return lprect
+}
+
+//ControlGetText -- Retrieves text from a control.
+func ControlGetText(title, text, control string, args ...interface{}) string {
+	var bufSize int
+	var ok bool
+
+	if len(args) == 0 {
+		bufSize = 256
+	} else if len(args) == 1 {
+		if bufSize, ok = args[0].(int); !ok {
+			panic("bufSize must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	buff := make([]uint16, int(bufSize))
+	ret, _, lastErr := controlGetText.Call(strPtr(title), strPtr(text), strPtr(control), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return (goWString(buff))
+}
+
+//ControlGetTextByHandle -- Retrieves text from a control.
+func ControlGetTextByHandle(handle, control HWND, args ...interface{}) string {
+	var bufSize int
+	var ok bool
+
+	if len(args) == 0 {
+		bufSize = 256
+	} else if len(args) == 1 {
+		if bufSize, ok = args[0].(int); !ok {
+			panic("bufSize must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	buff := make([]uint16, int(bufSize))
+	ret, _, lastErr := controlGetTextByHandle.Call(uintptr(handle), uintptr(control), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return (goWString(buff))
+}
+
+//ControlHide -- Hides a control.
+func ControlHide(title, text, control string) int {
+	ret, _, lastErr := controlHide.Call(strPtr(title), strPtr(text), strPtr(control))
+	if int(ret) == 1 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlHideByHandle -- Hides a control.
+func ControlHideByHandle(title, text, control string) int {
+	ret, _, lastErr := controlHideByHandle.Call(strPtr(title), strPtr(text), strPtr(control))
+	if int(ret) == 1 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlMove -- Hides a control.
+func ControlMove(title, text, control string, x, y int, args ...interface{}) int {
+	var width, height int
+	var ok bool
+
+	if len(args) == 0 {
+		width = -1
+		height = -1
+	} else if len(args) == 2 {
+		if width, ok = args[0].(int); !ok {
+			panic("width must be a int")
+		}
+		if height, ok = args[1].(int); !ok {
+			panic("height must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	ret, _, lastErr := controlMove.Call(strPtr(title), strPtr(text), strPtr(control), intPtr(x), intPtr(y), intPtr(width), intPtr(height))
+	if int(ret) == 1 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlMoveByHandle -- Hides a control.
+func ControlMoveByHandle(handle, control HWND, x, y int, args ...interface{}) int {
+	var width, height int
+	var ok bool
+
+	if len(args) == 0 {
+		width = -1
+		height = -1
+	} else if len(args) == 2 {
+		if width, ok = args[0].(int); !ok {
+			panic("width must be a int")
+		}
+		if height, ok = args[1].(int); !ok {
+			panic("height must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	ret, _, lastErr := controlMoveByHandle.Call(uintptr(handle), uintptr(control), intPtr(x), intPtr(y), intPtr(width), intPtr(height))
+	if int(ret) == 1 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlShow -- Shows a control that was hidden.
+func ControlShow(title, text, control string) int {
+	ret, _, lastErr := controlShow.Call(strPtr(title), strPtr(text), strPtr(control))
+	if int(ret) == 1 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlShowByHandle -- Shows a control that was hidden.
+func ControlShowByHandle(handle, control HWND) int {
+	ret, _, lastErr := controlShowByHandle.Call(uintptr(handle), uintptr(control))
+	if int(ret) == 1 {
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+//ControlTreeView -- Sends a command to a TreeView32 control.
+func ControlTreeView(title, text, control, command string, args ...interface{}) string {
+	var Extra1, Extra2 string
+	var bufSize int
+	var ok bool
+
+	if len(args) == 0 {
+		Extra1 = ""
+		Extra2 = ""
+		bufSize = 256
+	} else if len(args) == 1 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		Extra2 = ""
+		bufSize = 256
+	} else if len(args) == 2 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		if Extra2, ok = args[1].(string); !ok {
+			panic("Extra2 must be a string")
+		}
+		bufSize = 256
+	} else if len(args) == 3 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		if Extra2, ok = args[1].(string); !ok {
+			panic("Extra2 must be a string")
+		}
+		if bufSize, ok = args[2].(int); !ok {
+			panic("bufSize must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	buff := make([]uint16, int(bufSize))
+	ret, _, lastErr := controlTreeView.Call(strPtr(title), strPtr(text), strPtr(control), strPtr(command), strPtr(Extra1), strPtr(Extra2), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return (goWString(buff))
+}
+
+//ControlTreeViewByHandle -- Sends a command to a TreeView32 control.
+func ControlTreeViewByHandle(handle, control HWND, command string, args ...interface{}) string {
+	var Extra1, Extra2 string
+	var bufSize int
+	var ok bool
+
+	if len(args) == 0 {
+		Extra1 = ""
+		Extra2 = ""
+		bufSize = 256
+	} else if len(args) == 1 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		Extra2 = ""
+		bufSize = 256
+	} else if len(args) == 2 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		if Extra2, ok = args[1].(string); !ok {
+			panic("Extra2 must be a string")
+		}
+		bufSize = 256
+	} else if len(args) == 3 {
+		if Extra1, ok = args[0].(string); !ok {
+			panic("Extra1 must be a string")
+		}
+		if Extra2, ok = args[1].(string); !ok {
+			panic("Extra2 must be a string")
+		}
+		if bufSize, ok = args[2].(int); !ok {
+			panic("bufSize must be a int")
+		}
+	} else {
+		panic("Error parameters")
+	}
+	buff := make([]uint16, int(bufSize))
+	ret, _, lastErr := controlTreeView.Call(uintptr(handle), uintptr(control), strPtr(command), strPtr(Extra1), strPtr(Extra2), uintptr(unsafe.Pointer(&buff[0])), intPtr(bufSize))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return (goWString(buff))
 }
 
 func findTermChr(buff []uint16) int {
