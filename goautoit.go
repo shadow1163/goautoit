@@ -95,6 +95,16 @@ var (
 	mouseMove               *syscall.LazyProc
 	mouseUp                 *syscall.LazyProc
 	mouseWheel              *syscall.LazyProc
+	opt                     *syscall.LazyProc
+	isAdmin                 *syscall.LazyProc
+	processClose            *syscall.LazyProc
+	processExists           *syscall.LazyProc
+	processSetPriority      *syscall.LazyProc
+	processWait             *syscall.LazyProc
+	processWaitClose        *syscall.LazyProc
+	runWait                 *syscall.LazyProc
+	runAs                   *syscall.LazyProc
+	runAsWait               *syscall.LazyProc
 )
 
 func init() {
@@ -148,6 +158,16 @@ func init() {
 	mouseMove = dll64.NewProc("AU3_MouseMove")
 	mouseUp = dll64.NewProc("AU3_MouseUp")
 	mouseWheel = dll64.NewProc("AU3_MouseWheel")
+	opt = dll64.NewProc("AU3_Opt")
+	isAdmin = dll64.NewProc("AU3_IsAdmin")
+	processClose = dll64.NewProc("AU3_ProcessClose")
+	processExists = dll64.NewProc("AU3_ProcessExists")
+	processSetPriority = dll64.NewProc("AU3_ProcessSetPriority")
+	processWait = dll64.NewProc("AU3_ProcessWait")
+	processWaitClose = dll64.NewProc("AU3_ProcessWaitClose")
+	runWait = dll64.NewProc("AU3_RunWait")
+	runAs = dll64.NewProc("AU3_RunAs")
+	runAsWait = dll64.NewProc("AU3_RunAsWait")
 }
 
 // WinMinimizeAll -- all windows should be minimize
@@ -1010,6 +1030,15 @@ func ControlTreeViewByHandle(handle, control HWND, command string, args ...inter
 		log.Println(lastErr)
 	}
 	return (goWString(buff))
+}
+
+//Opt -- set option
+func Opt(option, value string) int {
+	ret, _, lastErr := opt.Call(strPtr(option), strPtr(value))
+	if int(ret) == 0 {
+		log.Println(lastErr)
+	}
+	return int(ret)
 }
 
 func findTermChr(buff []uint16) int {
