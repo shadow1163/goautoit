@@ -58,8 +58,12 @@ var (
 	mouseClick              *syscall.LazyProc
 	clipGet                 *syscall.LazyProc
 	clipPut                 *syscall.LazyProc
+	winActivate             *syscall.LazyProc
+	winActive               *syscall.LazyProc
 	winGetHandle            *syscall.LazyProc
+	winMove                 *syscall.LazyProc
 	winCloseByHandle        *syscall.LazyProc
+	winSetState             *syscall.LazyProc
 	controlSend             *syscall.LazyProc
 	controlSendByHandle     *syscall.LazyProc
 	controlSetText          *syscall.LazyProc
@@ -127,8 +131,12 @@ func init() {
 	mouseClick = dll64.NewProc("AU3_MouseClick")
 	clipGet = dll64.NewProc("AU3_ClipGet")
 	clipPut = dll64.NewProc("AU3_ClipPut")
+	winActivate = dll64.NewProc("AU3_WinActivate")
+	winActive = dll64.NewProc("AU3_WinActive")
 	winGetHandle = dll64.NewProc("AU3_WinGetHandle")
+	winMove = dll64.NewProc("AU3_WinMove")
 	winCloseByHandle = dll64.NewProc("AU3_WinCloseByHandle")
+	winSetState = dll64.NewProc("AU3_WinSetState")
 	controlSend = dll64.NewProc("AU3_ControlSend")
 	controlSendByHandle = dll64.NewProc("AU3_ControlSendByHandle")
 	controlSetText = dll64.NewProc("AU3_ControlSetText")
@@ -464,7 +472,49 @@ func ClipPut(szClip string) int {
 	return int(ret)
 }
 
-//WinGetHandle -- get window handle
+// WinActivate ( "title" [, "text"]) int
+func WinActivate(title string, args ...interface{}) int {
+	text := ""
+	var ok bool
+	argsLen := len(args)
+	if argsLen > 1 {
+		panic("argument count > 2")
+	}
+	if argsLen == 1 {
+		if text, ok = args[0].(string); !ok {
+			panic("text must be a string")
+		}
+	}
+	ret, _, lastErr := winActivate.Call(strPtr(title), strPtr(text))
+	if int(ret) == 0 {
+		log.Print("failure!!!")
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+// WinActive ( "title" [, "text"]) int
+func WinActive(title string, args ...interface{}) int {
+	text := ""
+	var ok bool
+	argsLen := len(args)
+	if argsLen > 1 {
+		panic("argument count > 2")
+	}
+	if argsLen == 1 {
+		if text, ok = args[0].(string); !ok {
+			panic("text must be a string")
+		}
+	}
+	ret, _, lastErr := winActive.Call(strPtr(title), strPtr(text))
+	if int(ret) == 0 {
+		log.Print("failure!!!")
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+// WinGetHandle -- get window handle
 func WinGetHandle(title string, args ...interface{}) HWND {
 	var text string
 	var ok bool
@@ -485,11 +535,58 @@ func WinGetHandle(title string, args ...interface{}) HWND {
 	return HWND(ret)
 }
 
+// WinMove ( "title", "text", x, y [, width [, height [, speed]]] ) int
+func WinMove(title, text string, x, y int, args ...interface{}) int {
+	width := INTDEFAULT
+	height := INTDEFAULT
+	speed := 10
+	var ok bool
+	argsLen := len(args)
+	if argsLen > 0 {
+		if width, ok = args[0].(int); !ok {
+			panic("width must be an integer")
+		}
+		if argsLen > 1 {
+			if height, ok = args[1].(int); !ok {
+				panic("height must be an integer")
+			}
+			if argsLen > 2 {
+				if speed, ok = args[2].(int); !ok {
+					panic("speed must be an integer")
+				}
+				if speed < 1 || speed > 100 {
+					panic("speed must in range 1~100(slowest)")
+				}
+				if argsLen > 3 {
+					panic("too many arguments")
+				}
+			}
+		}
+	}
+	ret, _, lastErr := winMove.Call(strPtr(title), strPtr(text), intPtr(x), intPtr(y), intPtr(width),
+		intPtr(height), intPtr(speed))
+	if int(ret) == 0 {
+		log.Print("failure!!!")
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
 // WinCloseByHandle --
 func WinCloseByHandle(hwnd HWND) int {
 	ret, _, lastErr := winCloseByHandle.Call(uintptr(hwnd))
 	if int(ret) == 0 {
 		log.Print("failure!!!")
+		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+// WinSetState ( "title", "text", flag) int
+func WinSetState(title, text string, flag int) int {
+	ret, _, lastErr := winSetState.Call(strPtr(title), strPtr(text), intPtr(flag))
+	if int(ret) == 0 {
+		log.Print("WinSetState failure!!!")
 		log.Println(lastErr)
 	}
 	return int(ret)
