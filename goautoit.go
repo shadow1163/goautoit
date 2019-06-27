@@ -46,32 +46,12 @@ type POINT struct {
 
 var (
 	dll64                   *syscall.LazyDLL
-	winMinimizeAll          *syscall.LazyProc
-	winMinimizeAllundo      *syscall.LazyProc
-	winGetTitle             *syscall.LazyProc
-	winGetText              *syscall.LazyProc
-	send                    *syscall.LazyProc
-	run                     *syscall.LazyProc
-	winWait                 *syscall.LazyProc
-	controlClick            *syscall.LazyProc
-	controlClickByHandle    *syscall.LazyProc
-	mouseClick              *syscall.LazyProc
 	clipGet                 *syscall.LazyProc
 	clipPut                 *syscall.LazyProc
-	winActivate             *syscall.LazyProc
-	winActive               *syscall.LazyProc
-	winGetHandle            *syscall.LazyProc
-	winMove                 *syscall.LazyProc
-	winCloseByHandle        *syscall.LazyProc
-	winSetState             *syscall.LazyProc
-	controlSend             *syscall.LazyProc
-	controlSendByHandle     *syscall.LazyProc
-	controlSetText          *syscall.LazyProc
-	controlSetTextByHandle  *syscall.LazyProc
+	controlClick            *syscall.LazyProc
+	controlClickByHandle    *syscall.LazyProc
 	controlCommand          *syscall.LazyProc
 	controlCommandByHandle  *syscall.LazyProc
-	controlListView         *syscall.LazyProc
-	controlListViewByHandle *syscall.LazyProc
 	controlDisable          *syscall.LazyProc
 	controlDisableByHandle  *syscall.LazyProc
 	controlEnable           *syscall.LazyProc
@@ -86,12 +66,20 @@ var (
 	controlGetTextByHandle  *syscall.LazyProc
 	controlHide             *syscall.LazyProc
 	controlHideByHandle     *syscall.LazyProc
+	controlListView         *syscall.LazyProc
+	controlListViewByHandle *syscall.LazyProc
 	controlMove             *syscall.LazyProc
 	controlMoveByHandle     *syscall.LazyProc
+	controlSend             *syscall.LazyProc
+	controlSendByHandle     *syscall.LazyProc
+	controlSetText          *syscall.LazyProc
+	controlSetTextByHandle  *syscall.LazyProc
 	controlShow             *syscall.LazyProc
 	controlShowByHandle     *syscall.LazyProc
 	controlTreeView         *syscall.LazyProc
 	controlTreeViewByHandle *syscall.LazyProc
+	isAdmin                 *syscall.LazyProc
+	mouseClick              *syscall.LazyProc
 	mouseClickDrag          *syscall.LazyProc
 	mouseDown               *syscall.LazyProc
 	mouseGetCursor          *syscall.LazyProc
@@ -100,15 +88,28 @@ var (
 	mouseUp                 *syscall.LazyProc
 	mouseWheel              *syscall.LazyProc
 	opt                     *syscall.LazyProc
-	isAdmin                 *syscall.LazyProc
 	processClose            *syscall.LazyProc
 	processExists           *syscall.LazyProc
 	processSetPriority      *syscall.LazyProc
 	processWait             *syscall.LazyProc
 	processWaitClose        *syscall.LazyProc
-	runWait                 *syscall.LazyProc
+	run                     *syscall.LazyProc
 	runAs                   *syscall.LazyProc
 	runAsWait               *syscall.LazyProc
+	runWait                 *syscall.LazyProc
+	send                    *syscall.LazyProc
+	winActivate             *syscall.LazyProc
+	winActive               *syscall.LazyProc
+	winCloseByHandle        *syscall.LazyProc
+	winGetHandle            *syscall.LazyProc
+	winGetText              *syscall.LazyProc
+	winGetTitle             *syscall.LazyProc
+	winMinimizeAll          *syscall.LazyProc
+	winMinimizeAllundo      *syscall.LazyProc
+	winMove                 *syscall.LazyProc
+	winGetState             *syscall.LazyProc
+	winSetState             *syscall.LazyProc
+	winWait                 *syscall.LazyProc
 )
 
 func init() {
@@ -119,32 +120,12 @@ func init() {
 	filename = path.Join(path.Dir(filename), "lib\\AutoItX3_x64.dll")
 	dll64 = syscall.NewLazyDLL(filename)
 	// dll64 = syscall.NewLazyDLL(os.Getenv("GOPATH") + "\\src\\github.com\\shadow1163\\goautoit\\lib\\AutoItX3_x64.dll")
-	winMinimizeAll = dll64.NewProc("AU3_WinMinimizeAll")
-	winMinimizeAllundo = dll64.NewProc("AU3_WinMinimizeAllUndo")
-	winGetTitle = dll64.NewProc("AU3_WinGetTitle")
-	winGetText = dll64.NewProc("AU3_WinGetText")
-	send = dll64.NewProc("AU3_Send")
-	run = dll64.NewProc("AU3_Run")
-	winWait = dll64.NewProc("AU3_WinWait")
-	controlClick = dll64.NewProc("AU3_ControlClick")
-	controlClickByHandle = dll64.NewProc("AU3_ControlClickByHandle")
-	mouseClick = dll64.NewProc("AU3_MouseClick")
 	clipGet = dll64.NewProc("AU3_ClipGet")
 	clipPut = dll64.NewProc("AU3_ClipPut")
-	winActivate = dll64.NewProc("AU3_WinActivate")
-	winActive = dll64.NewProc("AU3_WinActive")
-	winGetHandle = dll64.NewProc("AU3_WinGetHandle")
-	winMove = dll64.NewProc("AU3_WinMove")
-	winCloseByHandle = dll64.NewProc("AU3_WinCloseByHandle")
-	winSetState = dll64.NewProc("AU3_WinSetState")
-	controlSend = dll64.NewProc("AU3_ControlSend")
-	controlSendByHandle = dll64.NewProc("AU3_ControlSendByHandle")
-	controlSetText = dll64.NewProc("AU3_ControlSetText")
-	controlSetTextByHandle = dll64.NewProc("AU3_ControlSetTextByHandle")
+	controlClick = dll64.NewProc("AU3_ControlClick")
+	controlClickByHandle = dll64.NewProc("AU3_ControlClickByHandle")
 	controlCommand = dll64.NewProc("AU3_ControlCommand")
 	controlCommandByHandle = dll64.NewProc("AU3_ControlCommandByHandle")
-	controlListView = dll64.NewProc("AU3_ControlListView")
-	controlListViewByHandle = dll64.NewProc("AU3_ControlListViewByHandle")
 	controlGetHandle = dll64.NewProc("AU3_ControlGetHandle")
 	controlGetHandleAsText = dll64.NewProc("AU3_ControlGetHandleAsText")
 	controlGetPos = dll64.NewProc("AU3_ControlGetPos")
@@ -153,12 +134,20 @@ func init() {
 	controlGetTextByHandle = dll64.NewProc("AU3_ControlGetTextByHandle")
 	controlHide = dll64.NewProc("AU3_ControlHide")
 	controlHideByHandle = dll64.NewProc("AU3_ControlHideByHandle")
+	controlListView = dll64.NewProc("AU3_ControlListView")
+	controlListViewByHandle = dll64.NewProc("AU3_ControlListViewByHandle")
 	controlMove = dll64.NewProc("AU3_ControlMove")
 	controlMoveByHandle = dll64.NewProc("AU3_ControlMoveByHandle")
+	controlSend = dll64.NewProc("AU3_ControlSend")
+	controlSendByHandle = dll64.NewProc("AU3_ControlSendByHandle")
+	controlSetText = dll64.NewProc("AU3_ControlSetText")
+	controlSetTextByHandle = dll64.NewProc("AU3_ControlSetTextByHandle")
 	controlShow = dll64.NewProc("AU3_ControlShow")
 	controlShowByHandle = dll64.NewProc("AU3_ControlShowByHandle")
 	controlTreeView = dll64.NewProc("AU3_ControlTreeView")
 	controlTreeViewByHandle = dll64.NewProc("AU3_ControlTreeViewByHandle")
+	isAdmin = dll64.NewProc("AU3_IsAdmin")
+	mouseClick = dll64.NewProc("AU3_MouseClick")
 	mouseClickDrag = dll64.NewProc("AU3_MouseClickDrag")
 	mouseDown = dll64.NewProc("AU3_MouseDown")
 	mouseGetCursor = dll64.NewProc("AU3_MouseGetCursor")
@@ -167,15 +156,28 @@ func init() {
 	mouseUp = dll64.NewProc("AU3_MouseUp")
 	mouseWheel = dll64.NewProc("AU3_MouseWheel")
 	opt = dll64.NewProc("AU3_Opt")
-	isAdmin = dll64.NewProc("AU3_IsAdmin")
 	processClose = dll64.NewProc("AU3_ProcessClose")
 	processExists = dll64.NewProc("AU3_ProcessExists")
 	processSetPriority = dll64.NewProc("AU3_ProcessSetPriority")
 	processWait = dll64.NewProc("AU3_ProcessWait")
 	processWaitClose = dll64.NewProc("AU3_ProcessWaitClose")
-	runWait = dll64.NewProc("AU3_RunWait")
+	run = dll64.NewProc("AU3_Run")
 	runAs = dll64.NewProc("AU3_RunAs")
 	runAsWait = dll64.NewProc("AU3_RunAsWait")
+	runWait = dll64.NewProc("AU3_RunWait")
+	send = dll64.NewProc("AU3_Send")
+	winActivate = dll64.NewProc("AU3_WinActivate")
+	winActive = dll64.NewProc("AU3_WinActive")
+	winCloseByHandle = dll64.NewProc("AU3_WinCloseByHandle")
+	winGetHandle = dll64.NewProc("AU3_WinGetHandle")
+	winGetText = dll64.NewProc("AU3_WinGetText")
+	winGetTitle = dll64.NewProc("AU3_WinGetTitle")
+	winMinimizeAll = dll64.NewProc("AU3_WinMinimizeAll")
+	winMinimizeAllundo = dll64.NewProc("AU3_WinMinimizeAllUndo")
+	winMove = dll64.NewProc("AU3_WinMove")
+	winGetState = dll64.NewProc("AU3_WinGetState")
+	winSetState = dll64.NewProc("AU3_WinSetState")
+	winWait = dll64.NewProc("AU3_WinWait")
 }
 
 // WinMinimizeAll -- all windows should be minimize
@@ -578,6 +580,26 @@ func WinCloseByHandle(hwnd HWND) int {
 	if int(ret) == 0 {
 		log.Print("failure!!!")
 		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+// WinGetState ( "title" [, "text"] ) int
+func WinGetState(title string, args ...interface{}) int {
+	text := ""
+	var ok bool
+	argsLen := len(args)
+	if argsLen > 1 {
+		panic("argument count > 2")
+	}
+	if argsLen == 1 {
+		if text, ok = args[0].(string); !ok {
+			panic("text must be a string")
+		}
+	}
+	ret, _, lastErr := winGetState.Call(strPtr(title), strPtr(text))
+	if int(ret) == 0 {
+		log.Println("winGetState failure!!!", lastErr)
 	}
 	return int(ret)
 }
