@@ -107,6 +107,7 @@ var (
 	winMinimizeAll          *syscall.LazyProc
 	winMinimizeAllundo      *syscall.LazyProc
 	winMove                 *syscall.LazyProc
+	winGetState             *syscall.LazyProc
 	winSetState             *syscall.LazyProc
 	winWait                 *syscall.LazyProc
 )
@@ -174,6 +175,7 @@ func init() {
 	winMinimizeAll = dll64.NewProc("AU3_WinMinimizeAll")
 	winMinimizeAllundo = dll64.NewProc("AU3_WinMinimizeAllUndo")
 	winMove = dll64.NewProc("AU3_WinMove")
+	winGetState = dll64.NewProc("AU3_WinGetState")
 	winSetState = dll64.NewProc("AU3_WinSetState")
 	winWait = dll64.NewProc("AU3_WinWait")
 }
@@ -578,6 +580,26 @@ func WinCloseByHandle(hwnd HWND) int {
 	if int(ret) == 0 {
 		log.Print("failure!!!")
 		log.Println(lastErr)
+	}
+	return int(ret)
+}
+
+// WinGetState ( "title" [, "text"] ) int
+func WinGetState(title string, args ...interface{}) int {
+	text := ""
+	var ok bool
+	argsLen := len(args)
+	if argsLen > 1 {
+		panic("argument count > 2")
+	}
+	if argsLen == 1 {
+		if text, ok = args[0].(string); !ok {
+			panic("text must be a string")
+		}
+	}
+	ret, _, lastErr := winGetState.Call(strPtr(title), strPtr(text))
+	if int(ret) == 0 {
+		log.Println("winGetState failure!!!", lastErr)
 	}
 	return int(ret)
 }
